@@ -2,16 +2,14 @@ import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import {  } from 'zustand-query'
+import {useQuery  } from 'zustand-query-kit'
 
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState([])
+  const {data, error,isError,isLoading,req } = useQuery()
 
-
-  useEffect(()=>{
-    // test()
-  } ,[])
+  
   return (
     <>
       <div>
@@ -24,7 +22,7 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
+        <button onClick={() =>  req('https://jsonplaceholder.typicode.com/todos/1')}>
           count is {count}
         </button>
         <p>

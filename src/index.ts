@@ -1,3 +1,2 @@
-export const test = () => {
- console.log("hello world");
-}
+export { default as useQuery} from "./useQuery"
+export { default as QueryProvider} from "./provider"
