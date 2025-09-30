@@ -151,7 +151,7 @@ const { data, isFetching, req } = useQuery(`${BASE_URL}/api/posts`);
 
 return (
   <div>
-    <button onClick={() => req("/api/posts")}>
+    <button onClick={() => req(`${BASE_URL}/api/posts`)}>
       {isFetching ? "Refreshing..." : "Refresh"}
     </button>
     <pre>{JSON.stringify(data, null, 2)}</pre>
