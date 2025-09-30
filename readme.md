@@ -51,7 +51,7 @@ Then use the `useQuery` hook anywhere:
 import { useQuery } from "react-simple-query";
 
 export default function Users() {
-  const { data, isLoading, isError, error } = useQuery("/api/users");
+  const { data, isLoading, isError, error } = useQuery(`${BASE_URL}/api/users`);
 
   if (isLoading) return <p>Loading...</p>;
   if (isError) return <p>Error: {error?.message}</p>;
@@ -104,7 +104,7 @@ Hook for fetching and managing async data.
 
 ```tsx
 const { data, isLoading, isFetching, isSuccess, isError, error, req } =
-  useQuery<User[]>("/api/users", {
+  useQuery<User[]>(`${BASE_URL}/api/users`, {
     method: "GET",
     headers: new Headers({ Authorization: "Bearer token" }),
   });
@@ -147,7 +147,7 @@ When `cash` is enabled in the `QueryProvider`:
 ## 📖 Example: Manual Refetch
 
 ```tsx
-const { data, isFetching, req } = useQuery("/api/posts");
+const { data, isFetching, req } = useQuery(`${BASE_URL}/api/posts`);
 
 return (
   <div>
