@@ -1,0 +1,44 @@
+{
+  "name": "zustand-query",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "build2": "tsup src/index.ts --cjsInterop"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "directories": {
+    "dist": "dist`"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DeveloperRejaul/zustand-query.git"
+  },
+  "author": "Rejaul Karim",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DeveloperRejaul/zustand-query/issues"
+  },
+  "keywords": [
+    "javascript",
+    "zustand-query",
+    "zustand"
+  ],
+  "homepage": "https://github.com/DeveloperRejaul/zustand-query#readme",
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}
