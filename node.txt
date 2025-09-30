@@ -1,0 +1,2 @@
+run for install: in example project
+npm link zustand-query
