@@ -2,13 +2,19 @@ import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import {useQuery  } from 'zustand-query-kit'
+import {useQuery  } from 'react-simple-query'
 
 
 function App() {
   const [count, setCount] = useState([])
   const {data, error,isError,isLoading,req } = useQuery()
 
+
+  
+
+  console.log(data);
+  
+ 
   
   return (
     <>

@@ -1,7 +1,3 @@
-Here's a polished **README.md** draft for your `react-simple-query` library, written in a professional, developer-friendly way:
-
----
-
 # 📦 react-simple-query
 
 A lightweight, **zero-dependency** React query library for simple data fetching, caching, and request state management.
@@ -179,5 +175,3 @@ return (
 MIT License © 2025
 
 ---
-
-Would you like me to also add a **real-world example project snippet** (like Next.js integration with SSR + `useQuery`) so developers see how to use this in production apps?
