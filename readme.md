@@ -236,11 +236,11 @@ When `cash` is enabled in the `QueryProvider`:
 ## 📖 Example: Manual Refetch
 
 ```tsx
-const { data, isFetching, req } = useQuery(`${BASE_URL}/api/posts`);
+const { data, isFetching, req } = useQuery(`/api/posts`);
 
 return (
   <div>
-    <button onClick={() => req(`${BASE_URL}/api/posts`)}>
+    <button onClick={() => req(`/api/posts`)}>
       {isFetching ? "Refreshing..." : "Refresh"}
     </button>
     <pre>{JSON.stringify(data, null, 2)}</pre>
