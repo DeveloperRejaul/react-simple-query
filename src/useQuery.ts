@@ -1,28 +1,13 @@
 'use client';
 
 import { useProvider } from 'provider';
-import {useEffect, useState} from 'react'
+import {useEffect, useLayoutEffect, useState} from 'react'
+import { ReqParamsTypes, State } from 'types';
 
 
-interface State<T>{
-    isLoading: boolean;
-    isFetching: boolean;
-    isSuccess: boolean;
-    isError: boolean;
-    error: any;
-    data: T | null;
-}
-interface ReqParamsTypes {
-    method?:"GET" | "POST" | "PUT" | "DELETE";
-    body?:any,
-    headers?:Headers,
-}
-
-
-export default function useQuery<T = any>(url?:string, prams?:ReqParamsTypes) {
-   const {config, cashRef} = useProvider()
-   const {cash} = config || {}
-   
+export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes) {
+    const {config, cashRef} = useProvider()
+    let {cash,baseUrl,cashTimeout=30000,requestTimeout=30000} = config || {}
     const [{data, error,isError,isFetching,isLoading,isSuccess}, setState] = useState<State<T>>({
         isLoading: false,
         isFetching: false,
@@ -32,30 +17,65 @@ export default function useQuery<T = any>(url?:string, prams?:ReqParamsTypes) {
         data: null,
     })
 
-    const req = async (url:string , prams?:ReqParamsTypes) => {
-            const {
-                method = "GET",
-                body = undefined,
-                headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json'})
-            } = prams || {}
+
+    useLayoutEffect(()=>{
+        if(typeof params?.useCash === "boolean" && `${params?.useCash}` === "false") {
+            cash = params?.useCash
+        }
+        if(params?.cashTimeout) {
+            cashTimeout = params?.cashTimeout
+        }
+        if(params?.requestTimeout) {
+           requestTimeout = params?.requestTimeout
+        }
+    },[])
+
+
+    useEffect(()=>{
+        if(url) req(url, params)
+    },[])
+
+    const req = async (url:string , params?:ReqParamsTypes) => {
+        const {
+            method = "GET",
+            body = undefined,
+            headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json'})
+        } = params || {}
+
+        let mainUrl = ""
+        if(baseUrl) {
+            mainUrl= baseUrl+url
+        }else{
+            mainUrl = url
+        }
+
+        let cashId = mainUrl;
+        if(params?.cashId) {
+            cashId = params.cashId
+        }
+
+        setState(pre=> ({...pre,isLoading: true}))
+
+        if(cash && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
+            setState((pre)=> ({...pre,isLoading: false, data: cashRef.current.get(cashId)?.data as T})) 
+            return
+        }
+
+        setState(pre=> ({...pre,isFetching: true}))
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
         try {
-            setState(pre=> ({...pre,isLoading: true}))
-
-            if(cash && cashRef.current.has(url)) {
-                setState((pre)=> ({...pre,isLoading: false, data: cashRef.current.get(url)?.data as T})) 
-                return
-            }
-
-            setState(pre=> ({...pre,isFetching: true}))
-            const res = await fetch(url, {
+            const res = await fetch(mainUrl, {
                 method,
                 body,
                 headers,
                 credentials:"include",
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             const result = await res.json()
             if(cash) {
-                cashRef.current.set(url, {data: result});
+                cashRef.current.set(cashId, {data: result, exp: Date.now() + cashTimeout});
             }
             setState(pre=> ({
                 ...pre,
@@ -65,15 +85,11 @@ export default function useQuery<T = any>(url?:string, prams?:ReqParamsTypes) {
                 data: result as T
             }))
         } catch (error) {
+            clearTimeout(timeoutId);
             setState(pre => ({...pre, error, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
         }
     }
 
-    useEffect(()=>{
-        if(url) {
-            req(url, prams)
-        }
-    },[])
 
     return {
         isLoading,
