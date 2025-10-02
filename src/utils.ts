@@ -1,3 +1,5 @@
+'use client'
+
 import { helper } from "provider";
 
 export const clearCash = () => helper.clearCash()

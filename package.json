@@ -1,6 +1,6 @@
 {
   "name": "react-simple-query",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -56,5 +56,6 @@
   },
   "peerDependencies": {
     "react": "*"
-  }
+  },
+  "sideEffects": false
 }
