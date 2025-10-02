@@ -56,7 +56,7 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes) {
 
         setState(pre=> ({...pre,isLoading: true}))
 
-        if(cash && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
+        if(cash && !(typeof params?.useCash ==="boolean" && `${params?.useCash}` === "false") && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
             setState((pre)=> ({...pre,isLoading: false, data: cashRef.current.get(cashId)?.data as T})) 
             return
         }
