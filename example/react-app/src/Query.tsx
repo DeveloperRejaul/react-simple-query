@@ -1,12 +1,30 @@
 import { useQuery,clearCash} from "react-simple-query";
 
+interface ResponseType {
+  id:string;
+  name:string
+}
 
 export default function Query() {
-
-    const { data, isLoading, isError, error, req } = useQuery(`/users`, {useCash: true,cashTimeout: 30000});
+    const { data, isLoading, isError, error, req } = useQuery<ResponseType[]>(`/users`, {
+      useCash: true,
+      cashTimeout: 30000,
+      onSuccess(data) {
+        console.log("onSuccess", data);
+      },
+      transformResponse(data) {
+        return data.map(d=> ({...d}))
+      },
+      onError(error) {
+        console.log(error);
+      },
+      transformError(error) {
+        return {error: error.message}
+      },
+    });
     
-    console.log("data", data);
-    console.log("isLoading", isLoading);
+    // console.log("data", data);
+    // console.log("isLoading", isLoading);
 
     
     if (isLoading) return <p>Loading...</p>;

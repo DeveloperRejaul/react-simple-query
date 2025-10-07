@@ -123,7 +123,19 @@ const {
 } = useQuery('/api/users', {
   useCash: true,
   cashTimeout: 30000,
-  requestTimeout: 30000
+  requestTimeout: 30000,
+  onSuccess(data) {
+    console.log("onSuccess", data);
+  },
+  transformResponse(data) {
+    return data.map(d=> ({...d}))
+  },
+  onError(error) {
+    console.log(error);
+  },
+  transformError(error) {
+    return {error: error.message}
+  },
 });
 ```
 
@@ -137,7 +149,7 @@ const {
 **ReqParamsTypes**
 
 ```ts
-interface ReqParamsTypes {
+interface ReqParamsTypes <T=any>{
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: any;
   headers?: Headers;
@@ -145,6 +157,10 @@ interface ReqParamsTypes {
   cashTimeout?: number;     // Override provider cache timeout
   requestTimeout?: number;  // Override provider request timeout
   cashId?: string;         // Custom cache key
+  onError?:(error:any)=>void
+  onSuccess?:(data:T)=>void
+  transformResponse?:(data:T)=>any
+  transformError?:(error:any)=>any
 }
 ```
 

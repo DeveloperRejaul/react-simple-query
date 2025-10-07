@@ -5,7 +5,7 @@ import {useEffect, useLayoutEffect, useState} from 'react'
 import { ReqParamsTypes, State } from 'types';
 
 
-export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes) {
+export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>) {
     const {config, cashRef} = useProvider()
     let {cash,baseUrl,cashTimeout=30000,requestTimeout=30000} = config || {}
     const [{data, error,isError,isFetching,isLoading,isSuccess}, setState] = useState<State<T>>({
@@ -57,7 +57,9 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes) {
         setState(pre=> ({...pre,isLoading: true}))
 
         if(cash && !(typeof params?.useCash ==="boolean" && `${params?.useCash}` === "false") && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
-            setState((pre)=> ({...pre,isLoading: false, data: cashRef.current.get(cashId)?.data as T})) 
+            const data = params?.transformResponse ? params.transformResponse(cashRef.current.get(cashId)?.data as T):cashRef.current.get(cashId)?.data as T;
+            setState((pre)=> ({...pre,isLoading: false, data})) 
+            params?.onSuccess?.(data)
             return
         }
 
@@ -74,19 +76,23 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes) {
             });
             clearTimeout(timeoutId);
             const result = await res.json()
+            const data = params?.transformResponse ? params.transformResponse(result): result;
             if(cash) {
-                cashRef.current.set(cashId, {data: result, exp: Date.now() + cashTimeout});
+                cashRef.current.set(cashId, {data: data, exp: Date.now() + cashTimeout});
             }
             setState(pre=> ({
                 ...pre,
                 isLoading: false, 
                 isFetching:false, 
                 isSuccess: true, 
-                data: result as T
+                data: data as T
             }))
+            params?.onSuccess?.(data as T)
         } catch (error) {
             clearTimeout(timeoutId);
-            setState(pre => ({...pre, error, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
+            const e = params?.transformError ?  params?.transformError(error) : error
+            setState(pre => ({...pre, error:e, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
+            params?.onError?.(e)
         }
     }
 

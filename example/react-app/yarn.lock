@@ -1155,9 +1155,9 @@ react-refresh@^0.17.0:
   resolved "https://registry.npmjs.org/react-refresh/-/react-refresh-0.17.0.tgz"
   integrity sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==
 
-"react-simple-query@file:..":
-  version "1.0.4"
-  resolved "file:.."
+"react-simple-query@file:../..":
+  version "1.0.9"
+  resolved "file:../.."
 
 react@^19.1.1:
   version "19.1.1"

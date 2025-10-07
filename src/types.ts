@@ -32,12 +32,16 @@ export interface State<T>{
     error: any;
     data: T | null;
 }
-export interface ReqParamsTypes {
+export interface ReqParamsTypes<T = any> {
     method?:"GET" | "POST" | "PUT" | "DELETE";
-    body?:any,
+    body?:T,
     headers?:Headers,
     useCash?:boolean;
     cashTimeout?:number;
     requestTimeout?:number
     cashId?:string;
+    onError?:(error:any)=>void
+    onSuccess?:(data:T)=>void
+    transformResponse?:(data:T)=>any
+    transformError?:(error:any)=>any
 }
