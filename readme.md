@@ -102,6 +102,11 @@ interface ConfigType {
   cash?: boolean;         // Enable/disable caching (default: true)
   cashTimeout?: number;   // Cache timeout in ms (default: 30000)
   requestTimeout?: number; // Request timeout in ms (default: 30000)
+  onError?:(error:any)=>void | Promise<void>
+  onSuccess?:(data:any)=>void | Promise<void>
+  transformResponse?:(data:any)=>any | Promise<any>
+  transformError?:(error:any)=>any | Promise<any>
+  transformHeader?:(data:Headers)=>Headers | Promise<Headers>
 }
 ```
 
@@ -136,6 +141,10 @@ const {
   transformError(error) {
     return {error: error.message}
   },
+  transformHeader(data) {
+    data.set("Authorization", "Bearer token")
+    return data
+  },
 });
 ```
 
@@ -157,10 +166,11 @@ interface ReqParamsTypes <T=any>{
   cashTimeout?: number;     // Override provider cache timeout
   requestTimeout?: number;  // Override provider request timeout
   cashId?: string;         // Custom cache key
-  onError?:(error:any)=>void
-  onSuccess?:(data:T)=>void
-  transformResponse?:(data:T)=>any
-  transformError?:(error:any)=>any
+  onError?:(error:any)=>void | Promise<void>
+  onSuccess?:(data:T)=>void | Promise<void>
+  transformResponse?:(data:T)=> any | Promise<any>
+  transformError?:(error:any)=> any | Promise<any>
+  transformHeader?:(data:Headers)=>Headers | Promise<Headers>
 }
 ```
 

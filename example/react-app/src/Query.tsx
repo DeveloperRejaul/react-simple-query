@@ -21,6 +21,10 @@ export default function Query() {
       transformError(error) {
         return {error: error.message}
       },
+      transformHeader(data) {
+        data.set("Authorization", "Bearer token")
+        return data
+      },
     });
     
     // console.log("data", data);

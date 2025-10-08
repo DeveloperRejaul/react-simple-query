@@ -7,7 +7,7 @@ import { ReqParamsTypes, State } from 'types';
 
 export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>) {
     const {config, cashRef} = useProvider()
-    let {cash,baseUrl,cashTimeout=30000,requestTimeout=30000} = config || {}
+    let {cash,baseUrl,cashTimeout=30000,requestTimeout=30000, onError,onSuccess,transformError,transformResponse, transformHeader} = config || {}
     const [{data, error,isError,isFetching,isLoading,isSuccess}, setState] = useState<State<T>>({
         isLoading: false,
         isFetching: false,
@@ -16,7 +16,6 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
         error: null,
         data: null,
     })
-
 
     useLayoutEffect(()=>{
         if(typeof params?.useCash === "boolean" && `${params?.useCash}` === "false") {
@@ -36,7 +35,7 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
     },[])
 
     const req = async (url:string , params?:ReqParamsTypes) => {
-        const {
+        let {
             method = "GET",
             body = undefined,
             headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json'})
@@ -57,7 +56,13 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
         setState(pre=> ({...pre,isLoading: true}))
 
         if(cash && !(typeof params?.useCash ==="boolean" && `${params?.useCash}` === "false") && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
-            const data = params?.transformResponse ? params.transformResponse(cashRef.current.get(cashId)?.data as T):cashRef.current.get(cashId)?.data as T;
+            let data = cashRef.current.get(cashId)?.data as T
+            if(transformResponse) {
+                data = await transformResponse(data)
+            }
+            if(params?.transformResponse){
+                data = await params.transformResponse(data)
+            }
             setState((pre)=> ({...pre,isLoading: false, data})) 
             params?.onSuccess?.(data)
             return
@@ -67,6 +72,13 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
         try {
+            // handle header
+            if(transformHeader) {
+                headers = await transformHeader(headers)
+            }
+            if(params?.transformHeader) {
+                headers = await params.transformHeader(headers)
+            }
             const res = await fetch(mainUrl, {
                 method,
                 body,
@@ -76,7 +88,13 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
             });
             clearTimeout(timeoutId);
             const result = await res.json()
-            const data = params?.transformResponse ? params.transformResponse(result): result;
+            let data = result;
+            if(transformResponse){
+               data = await transformResponse(data)
+            }
+            if(params?.transformResponse){
+                data = await params.transformResponse(data)
+            }
             if(cash) {
                 cashRef.current.set(cashId, {data: data, exp: Date.now() + cashTimeout});
             }
@@ -87,11 +105,19 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
                 isSuccess: true, 
                 data: data as T
             }))
+            onSuccess?.(data as T)
             params?.onSuccess?.(data as T)
         } catch (error) {
             clearTimeout(timeoutId);
-            const e = params?.transformError ?  params?.transformError(error) : error
+            let e = error;
+            if(transformError){
+               e = await transformError(e)
+            }
+            if(params?.transformError){
+                e = await params.transformError(e)
+            }
             setState(pre => ({...pre, error:e, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
+            onError?.(e)
             params?.onError?.(e)
         }
     }

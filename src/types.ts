@@ -3,6 +3,11 @@ export interface ConfigType{
     requestTimeout?:number
     cashTimeout?:number
     baseUrl:string
+    onError?:(error:any)=>void | Promise<void>
+    onSuccess?:(data:any)=>void | Promise<void>
+    transformResponse?:(data:any)=>any | Promise<any>
+    transformError?:(error:any)=>any | Promise<any>
+    transformHeader?:(data:Headers)=>Headers | Promise<Headers>
 }
 
 export interface ContextType {
@@ -40,8 +45,9 @@ export interface ReqParamsTypes<T = any> {
     cashTimeout?:number;
     requestTimeout?:number
     cashId?:string;
-    onError?:(error:any)=>void
-    onSuccess?:(data:T)=>void
-    transformResponse?:(data:T)=>any
-    transformError?:(error:any)=>any
+    onError?:(error:any)=>void | Promise<void>
+    onSuccess?:(data:T)=>void | Promise<void>
+    transformResponse?:(data:T)=> any | Promise<any>
+    transformError?:(error:any)=> any | Promise<any>
+    transformHeader?:(data:Headers)=>Headers | Promise<Headers>
 }
