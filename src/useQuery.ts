@@ -17,6 +17,9 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
         data: null,
     })
 
+    
+
+
     useLayoutEffect(()=>{
         if(typeof params?.useCash === "boolean" && `${params?.useCash}` === "false") {
             cash = params?.useCash
@@ -31,15 +34,17 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
 
 
     useEffect(()=>{
+        // this call when use useQuery
         if(url) req(url, params)
     },[])
 
-    const req = async (url:string , params?:ReqParamsTypes) => {
+    const req = async (url:string , p?:ReqParamsTypes) => {
+        const gParams = {...params, ...p}
         let {
             method = "GET",
             body = undefined,
             headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json'})
-        } = params || {}
+        } = gParams || {}
 
         let mainUrl = ""
         if(baseUrl) {
@@ -49,22 +54,22 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
         }
 
         let cashId = mainUrl;
-        if(params?.cashId) {
-            cashId = params.cashId
+        if(gParams?.cashId) {
+            cashId = gParams.cashId
         }
 
         setState(pre=> ({...pre,isLoading: true}))
 
-        if(cash && !(typeof params?.useCash ==="boolean" && `${params?.useCash}` === "false") && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
+        if(cash && !(typeof gParams?.useCash ==="boolean" && `${gParams?.useCash}` === "false") && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
             let data = cashRef.current.get(cashId)?.data as T
             if(transformResponse) {
                 data = await transformResponse(data)
             }
-            if(params?.transformResponse){
-                data = await params.transformResponse(data)
+            if(gParams?.transformResponse){
+                data = await gParams.transformResponse(data)
             }
             setState((pre)=> ({...pre,isLoading: false, data})) 
-            params?.onSuccess?.(data)
+            gParams?.onSuccess?.(data)
             return
         }
 
@@ -76,9 +81,10 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
             if(transformHeader) {
                 headers = await transformHeader(headers)
             }
-            if(params?.transformHeader) {
-                headers = await params.transformHeader(headers)
-            }
+            if(gParams?.transformHeader) {
+                headers = await gParams.transformHeader(headers)
+            }   
+            
             const res = await fetch(mainUrl, {
                 method,
                 body,
@@ -92,8 +98,8 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
             if(transformResponse){
                data = await transformResponse(data)
             }
-            if(params?.transformResponse){
-                data = await params.transformResponse(data)
+            if(gParams?.transformResponse){
+                data = await gParams.transformResponse( data as T)
             }
             if(cash) {
                 cashRef.current.set(cashId, {data: data, exp: Date.now() + cashTimeout});
@@ -106,19 +112,19 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
                 data: data as T
             }))
             onSuccess?.(data as T)
-            params?.onSuccess?.(data as T)
+            gParams?.onSuccess?.(data as T)
         } catch (error) {
             clearTimeout(timeoutId);
             let e = error;
             if(transformError){
                e = await transformError(e)
             }
-            if(params?.transformError){
-                e = await params.transformError(e)
+            if(gParams?.transformError){
+                e = await gParams.transformError(e)
             }
             setState(pre => ({...pre, error:e, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
             onError?.(e)
-            params?.onError?.(e)
+            gParams?.onError?.(e)
         }
     }
 
