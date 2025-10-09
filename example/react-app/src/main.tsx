@@ -7,7 +7,19 @@ const BASE_URL = "https://jsonplaceholder.typicode.com"
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
-    <QueryProvider config={{cash: true, baseUrl:BASE_URL, cashTimeout: 5000, requestTimeout: 6000}}>
+    <QueryProvider config={{
+      cash: true, 
+      baseUrl:BASE_URL, 
+      cashTimeout: 5000, 
+      requestTimeout: 6000,
+      transformResponse(data) {
+        return data
+      },
+      transformHeader(data) {
+        data.set("Auth", "auth token")
+        return data
+      },
+      }}>
        <App />
     </QueryProvider>
   // </StrictMode>,

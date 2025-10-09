@@ -1,10 +1,10 @@
 import {useMutation} from 'react-simple-query'
 
 export default function Mutation() {
-    const {req, isLoading, data} = useMutation()
+    const {req} = useMutation({})
 
-  console.log("isLoading", isLoading);
-  console.log("data", data);
+  // console.log("isLoading", isLoading);
+  // console.log("data", data);
   
 
   const handleMutation = () => {
@@ -15,7 +15,7 @@ export default function Mutation() {
           body: 'bar',
           userId: 1,
         }),
-    })
+      })
   }
 
 
