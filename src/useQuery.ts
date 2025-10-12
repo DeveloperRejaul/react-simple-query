@@ -93,10 +93,25 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
+            if(!res.ok){
+                // handle server side error
+                clearTimeout(timeoutId);
+                let e = await res.json()
+                if(transformError){
+                    e = await transformError(e)
+                }
+                if(gParams?.transformError){
+                    e = await gParams.transformError(e)
+                }
+                setState(pre => ({...pre, error:e, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
+                onError?.(e)
+                gParams?.onError?.(e)
+                return
+            }
             const result = await res.json()
             let data = result;
             if(transformResponse){
-               data = await transformResponse(data)
+            data = await transformResponse(data)
             }
             if(gParams?.transformResponse){
                 data = await gParams.transformResponse( data as T)

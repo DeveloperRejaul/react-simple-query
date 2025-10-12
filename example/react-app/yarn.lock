@@ -1156,7 +1156,7 @@ react-refresh@^0.17.0:
   integrity sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==
 
 "react-simple-query@file:../..":
-  version "1.1.1"
+  version "1.1.2"
   resolved "file:../.."
 
 react@^19.1.1:
