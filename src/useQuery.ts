@@ -11,7 +11,7 @@
 
 import { useProvider } from 'provider';
 import {useEffect, useLayoutEffect, useState} from 'react'
-import { PublicUseQueryReturn, ReqParamsTypes, State } from 'types';
+import {ReqParamsTypes, State } from 'types';
 
 /**
  * useQuery Hook - Fetch and cache data from API endpoints
@@ -48,7 +48,7 @@ import { PublicUseQueryReturn, ReqParamsTypes, State } from 'types';
  * const handleRefresh = () => req('/api/users/1');
  * ```
  */
-export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>):PublicUseQueryReturn<T> {
+export default function useQuery<R,P,E=any, C =any>(url?:string, params?:ReqParamsTypes<R, P, E, C>){
     // Get global config and cache reference from provider context
     const {config, cashRef} = useProvider()
     
@@ -66,13 +66,14 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
     } = config || {}
     
     // Initialize state for request lifecycle management
-    const [{data, error,isError,isFetching,isLoading,isSuccess}, setState] = useState<State<T>>({
+    const [{data, error,isError,isFetching,isLoading,isSuccess, currentData}, setState] = useState<State<R,E, C>>({
         isLoading: false,
         isFetching: false,
         isSuccess: false,
         isError: false,
         error: null,
         data: null,
+        currentData: null,
     })
 
     
@@ -105,7 +106,7 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
     useEffect(()=>{
         // Fetch data immediately if URL is provided
         if(url) req(url, params)
-    },[])
+    },[params ? JSON.stringify(params || "{}"): undefined])
 
     /**
      * Core request function - handles HTTP requests with caching and error management
@@ -121,7 +122,7 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
      * 5. Updates cache if enabled and request succeeded
      * 6. Calls appropriate callbacks (onSuccess/onError)
      */
-    const req = async (url:string , p?:ReqParamsTypes) => {
+    const req = async (url?:string , p?:ReqParamsTypes<R, P, E, C>) => {
         // Merge per-request params with initial params (per-request params take precedence)
         const gParams = {...params, ...p}
         
@@ -137,13 +138,18 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
         if(baseUrl) {
             mainUrl= baseUrl+url
         }else{
-            mainUrl = url
+            mainUrl = url ?? ""
         }
 
         // Determine cache key - use custom cashId or URL
         let cashId = mainUrl;
         if(gParams?.cashId) {
             cashId = gParams.cashId
+        }
+
+        // handle body transforms 
+        if(body && gParams.transformBody) {
+            body = await gParams.transformBody(body)
         }
 
         // Mark request as starting
@@ -160,21 +166,21 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
          */
         if(cash && !(typeof gParams?.useCash ==="boolean" && `${gParams?.useCash}` === "false") && cashRef.current.has(cashId) && method === "GET" && Date.now() <= cashRef.current.get(cashId)?.exp) {
             // Retrieve cached data
-            let data = cashRef.current.get(cashId)?.data as T
+            let d = cashRef.current.get(cashId)?.data
             
             // Transform cached data through response transformers
             if(transformResponse) {
-                data = await transformResponse(data)
+                d = await transformResponse(d)
             }
             if(gParams?.transformResponse){
-                data = await gParams.transformResponse(data)
+                d = await gParams.transformResponse(d)
             }
             
             // Update state with cached data
-            setState((pre)=> ({...pre,isLoading: false, data})) 
+            setState((pre)=> ({...pre,isLoading: false, data:d , currentData: cashRef.current.get(cashId)?.currentData})) 
             
             // Call success callbacks
-            gParams?.onSuccess?.(data)
+            gParams?.onSuccess?.(d)
             return
         }
 
@@ -208,7 +214,7 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
              */
             const res = await fetch(mainUrl, {
                 method,
-                body,
+                body: body as any,
                 headers,
                 credentials:"include",
                 signal: controller.signal
@@ -229,15 +235,15 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
                     e = await transformError(e)
                 }
                 if(gParams?.transformError){
-                    e = await gParams.transformError(e)
+                    e = await gParams.transformError(e as E)
                 }
                 
                 // Update state with error
-                setState(pre => ({...pre, error:e, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
+                setState(() => ({ data: null, error:e as E, isError: true, isFetching: false, isLoading: false, isSuccess: false , currentData: null}))
                 
                 // Call error callbacks
                 onError?.(e)
-                gParams?.onError?.(e)
+                gParams?.onError?.(e as E)
                 return
             }
             
@@ -246,38 +252,47 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
              * Parse JSON and transform data through transformers
              */
             const result = await res.json()
-            let data = result;
+            let d = result;
             
             // Apply response transformations
             if(transformResponse){
-                data = await transformResponse(data)
+                d = await transformResponse(d as C)
             }
 
             if(gParams?.transformResponse){
-                data = await gParams.transformResponse( data as T)
+                d = await gParams.transformResponse(d as C)
             }
             
+
+            // handle update query 
+            if(gParams.updateQueryData) {
+                d = await gParams.updateQueryData(data as R, d as R)
+            }
+
+
             /**
              * UPDATE CACHE
              * Store the response in cache with expiration timestamp
              * Cache contains both the data and expiration time
              */
             if(cash) {
-                cashRef.current.set(cashId, {data: data, exp: Date.now() + cashTimeout});
+                cashRef.current.set(cashId, {data: d,  currentData: result, exp: Date.now() + cashTimeout});
             }
             
             // Update state with successful response
-            setState(pre=> ({
-                ...pre,
+            setState(()=> ({
+                error: null,
                 isLoading: false, 
                 isFetching:false, 
                 isSuccess: true, 
-                data: data as T
+                data: d as R,
+                isError: false,
+                currentData: result as C,
             }))
             
             // Call success callbacks
-            onSuccess?.(data as T)
-            gParams?.onSuccess?.(data as T)
+            onSuccess?.(d)
+            gParams?.onSuccess?.(d as R)
             
         } catch (error) {
             /**
@@ -292,15 +307,15 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
                e = await transformError(e)
             }
             if(gParams?.transformError){
-                e = await gParams.transformError(e)
+                e = await gParams.transformError(e as E)
             }
             
             // Update state with error
-            setState(pre => ({...pre, error:e, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
+            setState(pre => ({...pre, error:e as E, isError: true, isFetching: false, isLoading: false, isSuccess: false}))
             
             // Call error callbacks
             onError?.(e)
-            gParams?.onError?.(e)
+            gParams?.onError?.(e as E)
         }
     }
 
@@ -309,17 +324,13 @@ export default function useQuery<T = any>(url?:string, params?:ReqParamsTypes<T>
      * All state values and the manual request function are reactive
      */
     return {
-        // Request lifecycle states
-        isLoading,    // True during initial request
-        isSuccess,    // True when request succeeded
-        isFetching,   // True during any request (initial or refetch)
-        isError,      // True when request failed
-        
-        // Result data and error
-        error,        // Error object if request failed, null otherwise
-        data,         // Response data if successful, null otherwise
-        
-        // Manual request trigger function
-        req,           // Function to manually trigger requests with different URLs/params
+        isLoading, 
+        isSuccess, 
+        isFetching,
+        isError,
+        error,
+        data,
+        currentData,
+        req,
     }
 }

@@ -48,4 +48,4 @@ import useQuery from "useQuery";
  * };
  * ```
  */
-export default <T = any>(params?: ReqParamsTypes) => useQuery(undefined, params)
+export default <R,P,E=any>(params?:ReqParamsTypes<R, P, E>) => useQuery(undefined, params)

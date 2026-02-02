@@ -6,17 +6,17 @@ interface ResponseType {
 }
 
 export default function Query() {
-    const { data, isLoading, isError, error, req } = useQuery<ResponseType[]>(`/users`, {
+    const { data, isLoading, isError, error, req } = useQuery<ResponseType[], void>(`/users`, {
       useCash: true,
       cashTimeout: 30000,
       onSuccess(data) {
-        console.log("onSuccess", data);
+        // console.log("onSuccess", data);
       },
       transformResponse(data) {
-        return data.map(d=> ({...d}))
+        return data
       },
       onError(error) {
-        console.log(error);
+        // console.log(error);
       },
       transformError(error) {
         return {error: error.message}
@@ -27,17 +27,13 @@ export default function Query() {
       },
     });
     
-    // console.log("data", data);
-    // console.log("isLoading", isLoading);
-
-    
     if (isLoading) return <p>Loading...</p>;
     if (isError) return <p>Error: {error?.message}</p>;
     
 
   return (
     <div>
-        <div onClick={() => clearCash()}>clearCash</div>
+      <div onClick={() => clearCash()}>clearCash</div>
       <div onClick={() => req(`/users`)}>fetch again</div>
       <ul>
         {data?.map((user) => (

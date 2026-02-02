@@ -9,7 +9,7 @@
  * Configuration object passed to QueryProvider
  * Defines global settings for HTTP requests, caching, and response/error handling
  */
-export interface ConfigType<T=any, E=any>{
+export interface ConfigType{
     /** Enable client-side caching of GET requests */
     cash?:boolean,
     /** Global request timeout in milliseconds. Default: 30000ms (30 seconds) */
@@ -19,13 +19,13 @@ export interface ConfigType<T=any, E=any>{
     /** Base URL prepended to all relative URLs in requests */
     baseUrl:string
     /** Global error handler called when any request fails */
-    onError?:(error:E)=>void | Promise<void>
+    onError?:(error:any)=>void | Promise<void>
     /** Global success handler called when any request succeeds */
-    onSuccess?:(data:T)=>void | Promise<void>
+    onSuccess?:(data:any)=>void | Promise<void>
     /** Global transformer to modify response data before returning */
-    transformResponse?:(data:T)=>T | Promise<T>
+    transformResponse?:(data:any)=> void | Promise<void>
     /** Global transformer to modify error objects before returning */
-    transformError?:(error:E)=>E | Promise<E>
+    transformError?:(error:any)=> void | Promise<void>
     /** Global transformer to modify request headers before sending */
     transformHeader?:(data:Headers)=>Headers | Promise<Headers>
 }
@@ -75,7 +75,7 @@ export interface IHelper {
  * Represents the current state of a query or mutation request
  * @template T The data type returned by the request
  */
-export interface State<T>{
+export interface State<T, E,C>{
     /** True when initial request is being made */
     isLoading: boolean;
     /** True when request is being made (includes subsequent requests) */
@@ -85,9 +85,10 @@ export interface State<T>{
     /** True when request failed with an error */
     isError: boolean;
     /** Error object if request failed, null otherwise */
-    error: any;
+    error: E | null;
     /** Response data if request succeeded, null otherwise */
     data: T | null;
+    currentData: C | null;
 }
 
 /**
@@ -95,11 +96,11 @@ export interface State<T>{
  * Allows overriding request behavior on a per-request basis
  * @template T The expected data type returned by the request
  */
-export interface ReqParamsTypes<T = any, E=any> {
+export interface ReqParamsTypes<R,P,E=any, C=any>{
     /** HTTP method: GET, POST, PUT, or DELETE. Default: GET */
     method?:"GET" | "POST" | "PUT" | "DELETE";
     /** Request body payload (typically for POST/PUT requests) */
-    body?:T,
+    body?:P,
     /** Custom Headers object for the request */
     headers?:Headers,
     /** Override global cache setting for this specific request */
@@ -113,32 +114,14 @@ export interface ReqParamsTypes<T = any, E=any> {
     /** Error handler specific to this request (called in addition to global handler) */
     onError?:(error:E)=>void | Promise<void>
     /** Success handler specific to this request (called in addition to global handler) */
-    onSuccess?:(data:T)=>void | Promise<void>
+    onSuccess?:(data:R)=>void | Promise<void>
     /** Transform response data for this request only */
-    transformResponse?:(data:T)=> any | Promise<any>
+    transformResponse?:(data:C)=> R | Promise<R>
     /** Transform error for this request only */
     transformError?:(error:E)=> E | Promise<E>
     /** Transform headers for this request only */
     transformHeader?:(data:Headers)=>Headers | Promise<Headers>
-}
-
-
-export type PublicUseQueryReturn<T> = {
-  isLoading: boolean;
-  isFetching: boolean;
-  isSuccess: boolean;
-  isError: boolean;
-  error: any;
-  data: T | null;
-  req: (url:string, params: ReqParamsTypes) => void | Promise<void>;
-};
-
-export type InternalUseQueryReturn<T> = PublicUseQueryReturn<T> & {
-  setState: React.Dispatch<React.SetStateAction<State<T>>>;
-};
-
-
-
-export interface InfinityReqParamsTypes<T=any, E=any> extends ReqParamsTypes<T, E> {
-    cashId:string;
+     /** Transform body for this request only */
+    transformBody?:<T=any>(data:P)=>T | Promise<T> 
+    updateQueryData?:(prevusData:R ,curentData:R)=>R | Promise<R> 
 }

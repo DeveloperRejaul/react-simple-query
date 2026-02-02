@@ -1,12 +1,12 @@
 import {useMutation} from 'react-simple-query'
 
 export default function Mutation() {
-    const {req} = useMutation({
+    const {req} = useMutation<void, {title:string, body:string, userId:number}>({
       onError(error) {
-        console.log("error",error);
+        // console.log("error",error);
       },
       onSuccess(data) {
-        console.log("onSuccess", data);
+        // console.log("onSuccess", data);
       },
     })
 
@@ -18,9 +18,9 @@ export default function Mutation() {
     req("/posts", {
         method: 'POST',
         body: {
-          title: 'foo',
-          body: 'bar',
-          userId: 1,
+          title:"",
+          body:"sadfa",
+          userId:12,
         },
       })
   }
