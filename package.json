@@ -1,6 +1,6 @@
 {
   "name": "react-simple-query",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -19,11 +19,11 @@
     }
   },
   "directories": {
-    "dist": "dist`"
+    "dist": "dist"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DeveloperRejaul/react-simple-query.git"
+    "url": "git+https://github.com/DeveloperRejaul/react-simple-query.git"
   },
   "author": "Rejaul Karim",
   "license": "ISC",

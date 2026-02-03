@@ -169,6 +169,8 @@ interface ReqParamsTypes <T=any>{
   onError?:(error:any)=>void | Promise<void>
   onSuccess?:(data:T)=>void | Promise<void>
   transformResponse?:(data:T)=> any | Promise<any>
+  transformBody?:(data:T)=> any | Promise<any>
+  updateQueryData?:(data:T)=> any | Promise<any>
   transformError?:(error:any)=> any | Promise<any>
   transformHeader?:(data:Headers)=>Headers | Promise<Headers>
 }
